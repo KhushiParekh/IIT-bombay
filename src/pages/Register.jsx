@@ -53,7 +53,7 @@ const Register = () => {
         userData
       );
 
-      navigate('/dashboard');
+      navigate('/company-dashboard');
     } catch (err) {
       setError(err.message);
     }

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { auth, db } from '../pages/firebase';
-import { AlertCircle, Check, User } from 'lucide-react';
+import { AlertCircle, Check, User, Phone, Mail, Key, Calendar, Building, Edit2, X } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -127,91 +127,114 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-100/20 to-indigo-100/40 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
         {message.text && (
-          <div className={`mb-4 p-4 rounded-lg flex items-center space-x-2 ${
-            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          <div className={`mb-6 p-4 rounded-xl shadow-lg flex items-center space-x-3 transform transition-all duration-500 ${
+            message.type === 'error' ? 'bg-red-50 text-red-700 border-l-4 border-red-500' : 'bg-green-50 text-green-700 border-l-4 border-green-500'
           }`}>
-            {message.type === 'error' ? <AlertCircle className="h-5 w-5" /> : <Check className="h-5 w-5" />}
-            <span>{message.text}</span>
+            {message.type === 'error' ? 
+              <AlertCircle className="h-6 w-6 flex-shrink-0" /> : 
+              <Check className="h-6 w-6 flex-shrink-0" />
+            }
+            <span className="font-medium">{message.text}</span>
           </div>
         )}
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="bg-indigo-100 rounded-full p-3">
-                <User className="h-6 w-6 text-indigo-600" />
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-500/80 to-blue-500/90 px-6 py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="bg-white/20 backdrop-blur-md rounded-full p-4">
+                  <User className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white">{userData.name}</h3>
+                  <p className="text-indigo-100">{userData.email}</p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-gray-900">Profile Information</h3>
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg backdrop-blur-md transition-all duration-200 border border-white/20"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span>Edit Profile</span>
+                </button>
+              )}
             </div>
-            {!isEditing && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Edit Profile
-              </button>
-            )}
           </div>
 
-          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+          <div className="p-6">
             {isEditing ? (
-              <form onSubmit={handleEditSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Private Key</label>
-                  <input
-                    type="password"
-                    value={editForm.privateKey}
-                    onChange={(e) => setEditForm({ ...editForm, privateKey: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-
-                {userData.gstNo && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">GST Number</label>
+              <form onSubmit={handleEditSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <span>Name</span>
+                    </label>
                     <input
                       type="text"
-                      value={editForm.gstNo}
-                      onChange={(e) => setEditForm({ ...editForm, gstNo: e.target.value })}
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                     />
                   </div>
-                )}
 
-                <div className="flex space-x-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>Phone</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <Key className="h-4 w-4 text-gray-400" />
+                      <span>Private Key</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={editForm.privateKey}
+                      onChange={(e) => setEditForm({ ...editForm, privateKey: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    />
+                  </div>
+
+                  {userData.gstNo && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                        <Building className="h-4 w-4 text-gray-400" />
+                        <span>GST Number</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.gstNo}
+                        onChange={(e) => setEditForm({ ...editForm, gstNo: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex space-x-4 pt-4">
                   <button
                     type="submit"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-blue-600 transition-all duration-200 font-medium"
                   >
                     Save Changes
                   </button>
@@ -221,111 +244,97 @@ const Profile = () => {
                       setIsEditing(false);
                       setEditForm(userData);
                     }}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                    className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Name</label>
-                  <p className="mt-1 text-lg text-gray-900">{userData.name}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Email</label>
-                  <p className="mt-1 text-lg text-gray-900">{userData.email}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Phone</label>
-                  <p className="mt-1 text-lg text-gray-900">{userData.phone}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Private Key</label>
-                  <p className="mt-1 text-lg text-gray-900">••••••••</p>
-                </div>
-
-                {userData.gstNo && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500">GST Number</label>
-                    <p className="mt-1 text-lg text-gray-900">{userData.gstNo}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Account Created</label>
-                  <p className="mt-1 text-lg text-gray-900">
-                    {new Date(userData.createdAt).toLocaleDateString()}
-                  </p>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <InfoCard icon={<Phone />} label="Phone" value={userData.phone} />
+                  <InfoCard icon={<Mail />} label="Email" value={userData.email} />
+                  <InfoCard icon={<Key />} label="Private Key" value="••••••••" />
+                  {userData.gstNo && (
+                    <InfoCard icon={<Building />} label="GST Number" value={userData.gstNo} />
+                  )}
+                  <InfoCard 
+                    icon={<Calendar />} 
+                    label="Account Created" 
+                    value={new Date(userData.createdAt).toLocaleDateString()} 
+                  />
                 </div>
 
                 <button
                   onClick={() => setShowPasswordChange(!showPasswordChange)}
-                  className="mt-4 text-indigo-600 hover:text-indigo-800"
+                  className="mt-6 text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-2"
                 >
-                  Change Password
+                  <Key className="h-4 w-4" />
+                  <span>Change Password</span>
                 </button>
               </div>
             )}
 
             {showPasswordChange && !isEditing && (
-              <form onSubmit={handlePasswordChange} className="mt-6 space-y-4 border-t pt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
+              <div className="mt-8 border-t pt-6">
+                <form onSubmit={handlePasswordChange} className="space-y-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Change Password</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Current Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">New Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    Update Password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPasswordChange(false);
-                      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                    }}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+                  <div className="flex space-x-4 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-blue-600 transition-all duration-200 font-medium"
+                    >
+                      Update Password
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPasswordChange(false);
+                        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                      }}
+                      className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
             )}
           </div>
         </div>
@@ -334,4 +343,19 @@ const Profile = () => {
   );
 };
 
-export {Profile} ;
+// Info Card Component for displaying user information
+const InfoCard = ({ icon, label, value }) => (
+  <div className="bg-gray-50 rounded-xl p-4 transition-all duration-200 hover:shadow-md">
+    <div className="flex items-center space-x-3">
+      <div className="text-gray-400">
+        {React.cloneElement(icon, { size: 18 })}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="text-lg text-gray-900">{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+export { Profile };

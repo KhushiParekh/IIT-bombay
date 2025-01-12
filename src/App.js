@@ -11,9 +11,12 @@ import Settings from './components/Settings';
 import { Analytics } from './components/Analytics';
 import { MetadataTracker } from './components/MetaDataTracker';
 import FloatingChatButton from './components/FloatingChatButton';
+import GTranslate from './components/GTranslate';
 
 export const App = () => (
   <BrowserRouter>
+  <GTranslate/>
+
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/user-dashboard" element={<UserDashboard />} />

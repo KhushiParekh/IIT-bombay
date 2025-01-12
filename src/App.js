@@ -12,6 +12,7 @@ import { Analytics } from './components/Analytics';
 import { MetadataTracker } from './components/MetaDataTracker';
 import FloatingChatButton from './components/FloatingChatButton';
 import GTranslate from './components/GTranslate';
+import Register from './pages/Register';
 
 export const App = () => (
   <BrowserRouter>
@@ -19,6 +20,7 @@ export const App = () => (
 
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/user-dashboard" element={<UserDashboard />} />
       <Route path="/company-dashboard" element={<CompanyDashboard />} />
       <Route path="/profile" element={<Profile />} />

@@ -4,10 +4,11 @@ import axios from 'axios';
 import abi from '../abi.json';
 import DataAnalysisDashBoard from '../components/AIAnalysisDashboard';
 // Pinata configuration
-import { BookCopyIcon, AArrowUpIcon, KeyIcon, LockOpenIcon, ChevronDownIcon, Book } from 'lucide-react';
+import { BookCopyIcon, AArrowUpIcon, KeyIcon, LockOpenIcon, ChevronDownIcon, Book,MailIcon } from 'lucide-react';
 import { Brain, Loader, XCircle } from 'lucide-react';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
+import emailjs from '@emailjs/browser';
 
 const CONTRACT_ADDRESS = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
 const PINATA_API_KEY = '815cb6c5b936de120de6';
@@ -272,6 +273,7 @@ const CompanyFiles = ({ contract, account }) => {
   const [files, setFiles] = useState([]);
   const [status, setStatus] = useState('');
   const [expandedFile, setExpandedFile] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     fetchFiles();
@@ -303,15 +305,82 @@ const CompanyFiles = ({ contract, account }) => {
     }
   };
 
+  const generateMonthlyReport = () => {
+    const currentDate = new Date();
+    const monthName = currentDate.toLocaleString('default', { month: 'long' });
+    
+    let reportContent = `Monthly File Report - ${monthName} ${currentDate.getFullYear()}\n\n`;
+    reportContent += `Total Files: ${files.length}\n\n`;
+    
+    files.forEach((file, index) => {
+      reportContent += `${index + 1}. ${file.metadata || file.ipfsHash}\n`;
+      reportContent += `   IPFS Hash: ${file.ipfsHash}\n`;
+      reportContent += `   Universal Access: ${file.isUniversal ? 'Enabled' : 'Disabled'}\n\n`;
+    });
+    
+    return reportContent;
+  };
+
+  const sendMonthlyReport = async () => {
+    setSendingEmail(true);
+    setStatus('Sending report...');
+  
+    try {
+      const templateParams = {
+        to_email: 'paramgogia25@outlook.com',
+        from_name: 'Company Files System',
+        message: generateMonthlyReport(),
+        subject: `Monthly Files Report - ${new Date().toLocaleString('default', { month: 'long' })} ${new Date().getFullYear()}`
+      };
+  
+      console.log('Template Params:', templateParams); // Debug log
+  
+      const response = await emailjs.send(
+        'service_i3t8r4m',
+        'template_e254j4c',
+        templateParams,
+        'hfx--3KcbLgX-EWIv'
+      );
+  
+      console.log('Email.js Response:', response); // Debug log
+  
+      setStatus('Report sent successfully!');
+    } catch (error) {
+      console.error('Email.js Detailed Error:', error); // Debug log
+      setStatus(`Error sending report: ${error.message}`);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-      <div className="flex items-center mb-4">
-        <BookCopyIcon className="w-6 h-6 text-indigo-600 mr-2" />
-        <h3 className="text-xl font-bold text-gray-800">Company Files</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <BookCopyIcon className="w-6 h-6 text-indigo-600 mr-2" />
+          <h3 className="text-xl font-bold text-gray-800">Company Files</h3>
+        </div>
+        
+        <button
+          onClick={sendMonthlyReport}
+          disabled={sendingEmail}
+          className={`flex items-center px-4 py-2 rounded-lg text-white transition-colors ${
+            sendingEmail 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+        >
+          <MailIcon className="w-4 h-4 mr-2" />
+          {sendingEmail ? 'Sending...' : 'Send Monthly Report'}
+        </button>
       </div>
 
       {status && (
-        <div className={`mb-4 p-3 rounded-lg ${status.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+        <div className={`mb-4 p-3 rounded-lg ${
+          status.includes('Error') 
+            ? 'bg-red-100 text-red-700' 
+            : 'bg-green-100 text-green-700'
+        }`}>
           {status}
         </div>
       )}
@@ -325,20 +394,32 @@ const CompanyFiles = ({ contract, account }) => {
             >
               <div className="flex items-center space-x-2">
                 <BookCopyIcon className="w-5 h-5 text-indigo-600" />
-                <span className="font-medium text-gray-800 truncate max-w-md">{file.metadata || file.ipfsHash}</span>
+                <span className="font-medium text-gray-800 truncate max-w-md">
+                  {file.metadata || file.ipfsHash}
+                </span>
               </div>
-              <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform ${expandedFile === index ? 'transform rotate-180' : ''}`} />
+              <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform ${
+                expandedFile === index ? 'transform rotate-180' : ''
+              }`} />
             </div>
 
             {expandedFile === index && (
               <div className="p-4 border-t border-gray-200">
                 <div className="space-y-2">
-                  <p className="text-sm"><span className="font-medium">IPFS Hash:</span> {file.ipfsHash}</p>
-                  <p className="text-sm"><span className="font-medium">Metadata:</span> {file.metadata}</p>
+                  <p className="text-sm">
+                    <span className="font-medium">IPFS Hash:</span> {file.ipfsHash}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Metadata:</span> {file.metadata}
+                  </p>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center space-x-2">
-                      <LockOpenIcon className={`w-5 h-5 ${file.isUniversal ? 'text-green-500' : 'text-gray-400'}`} />
-                      <span className={`text-sm ${file.isUniversal ? 'text-green-600' : 'text-gray-600'}`}>
+                      <LockOpenIcon className={`w-5 h-5 ${
+                        file.isUniversal ? 'text-green-500' : 'text-gray-400'
+                      }`} />
+                      <span className={`text-sm ${
+                        file.isUniversal ? 'text-green-600' : 'text-gray-600'
+                      }`}>
                         {file.isUniversal ? 'Universal Access Enabled' : 'Universal Access Disabled'}
                       </span>
                     </div>

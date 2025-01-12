@@ -4,7 +4,8 @@ import axios from "axios";
 import Tesseract from "tesseract.js";
 import { ethers } from 'ethers';
 import WatermarkModal from "./invisibleWatermark";
-// SVG Components remain unchanged
+
+// SVG Components
 const CurvedArrow = () => (
   <svg className="absolute right-0 top-0 w-32 h-64" viewBox="0 0 100 300">
     <path
@@ -52,6 +53,46 @@ const DottedCurveVector = () => (
   </svg>
 );
 
+// Custom Alert Dialog
+const AlertDialog = ({ isOpen, onClose, suspiciousTerms }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="text-xl font-bold mb-4 text-red-600">⚠️ Suspicious Content Detected</div>
+        <div className="mb-6">
+          <p className="text-gray-700 mb-2">
+            Potentially sensitive financial terms detected: 
+            <span className="font-semibold">{suspiciousTerms.join(", ")}</span>
+          </p>
+          <p className="text-gray-700">
+            Please be careful when uploading content containing financial or sensitive information.
+            Make sure you're following all security and privacy guidelines.
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+        >
+          I Understand
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Suspicious keywords check
+const checkForSuspiciousContent = (keywords) => {
+  const suspiciousTerms = ['card', 'cvv', 'bank', 'affirm', 'stocx', 'tehen'];
+  const foundTerms = keywords
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .filter(word => suspiciousTerms.includes(word.trim()));
+  
+  return foundTerms.length > 0 ? foundTerms : null;
+};
+
 const UploadData = ({ contractAddress, walletAddress }) => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [file, setFile] = useState(null);
@@ -63,6 +104,8 @@ const UploadData = ({ contractAddress, walletAddress }) => {
   const [showMintForm, setShowMintForm] = useState(false);
   const [processingFile, setProcessingFile] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [showSuspiciousAlert, setShowSuspiciousAlert] = useState(false);
+  const [suspiciousTerms, setSuspiciousTerms] = useState([]);
 
   const PINATA_API_KEY = "815cb6c5b936de120de6";
   const PINATA_SECRET_KEY = "71b9f2139171591882a5b4cbb9d5ab4846b9b845911a5960111a2cd8ad4a9984";
@@ -118,7 +161,6 @@ const UploadData = ({ contractAddress, walletAddress }) => {
     }
   };
 
-  // Modified handleUpload function to use smart contract
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file || !metadata || !encryptionKey) {
@@ -154,7 +196,6 @@ const UploadData = ({ contractAddress, walletAddress }) => {
     }
   };
 
-  // Modified handleMint function
   const handleMint = async (e) => {
     e.preventDefault();
     if (!file || !metadata || !encryptionKey) {
@@ -173,7 +214,6 @@ const UploadData = ({ contractAddress, walletAddress }) => {
       const tx = await contract.mintNFT(ipfsHash, metadata, encryptionKey);
       const receipt = await tx.wait();
 
-      // Find the NFTMinted event in the receipt
       const event = receipt.events?.find(e => e.event === "NFTMinted");
       if (event) {
         const [tokenId] = event.args;
@@ -196,7 +236,6 @@ const UploadData = ({ contractAddress, walletAddress }) => {
     }
   };
 
-  // Rest of the component remains unchanged
   const extractTextFromImage = async (file) => {
     try {
       const result = await Tesseract.recognize(file, "eng", {
@@ -246,6 +285,17 @@ const UploadData = ({ contractAddress, walletAddress }) => {
     }
   };
 
+  const handleMetadataChange = (e) => {
+    const newMetadata = e.target.value;
+    setMetadata(newMetadata);
+    
+    const foundTerms = checkForSuspiciousContent(newMetadata);
+    if (foundTerms) {
+      setSuspiciousTerms(foundTerms);
+      setShowSuspiciousAlert(true);
+    }
+  };
+
   const processFile = async (file) => {
     setProcessingFile(true);
     try {
@@ -260,7 +310,16 @@ const UploadData = ({ contractAddress, walletAddress }) => {
       
       const keywords = await getKeywordsFromText(text);
       setExtractedKeywords(keywords);
-      setMetadata(keywords.join(", "));
+      
+      const keywordsString = keywords.join(", ");
+      setMetadata(keywordsString);
+      
+      const foundTerms = checkForSuspiciousContent(keywordsString);
+      if (foundTerms) {
+        setSuspiciousTerms(foundTerms);
+        setShowSuspiciousAlert(true);
+      }
+      
       setShowMintForm(true);
     } catch (error) {
       console.error("Error processing file:", error);
@@ -319,15 +378,19 @@ const UploadData = ({ contractAddress, walletAddress }) => {
     }
   };
 
-  // Return JSX remains exactly the same as your original component
   return (
     <div className="w-full min-h-screen bg-gray-50 p-11 font-sans relative overflow-hidden">
       <CurvedArrow />
       <SpiralVector />
 
+      <AlertDialog 
+        isOpen={showSuspiciousAlert} 
+        onClose={() => setShowSuspiciousAlert(false)}
+        suspiciousTerms={suspiciousTerms}
+      />
+
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-          {/* Left side - Preview */}
           <div className="flex flex-col">
             <div className="bg-gray-200 rounded-3xl overflow-hidden p-8 h-96">
               <img
@@ -354,9 +417,7 @@ const UploadData = ({ contractAddress, walletAddress }) => {
             </div>
           </div>
 
-          {/* Right side - Upload area */}
           <div className={`bg-white rounded-3xl px-8 pt-8 min-h-[350px] h-auto shadow-xl mt-8 lg:mt-24 ${showMintForm ? 'lg:w-[120%]' : ''} transition-all duration-300`}>
-         
             <div
               className={`border-2 border-dashed rounded-2xl p-12 text-center relative
                 ${dragActive ? "border-blue-500 bg-blue-50" : "border-gray-200"}
@@ -408,88 +469,86 @@ const UploadData = ({ contractAddress, walletAddress }) => {
                 </div>
               )}
 
-              
-            {showMintForm && (
-              <div className="mt-6 border-t pt-6">
-                <form onSubmit={handleMint} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Metadata (Keywords)
-                    </label>
-                    <input
-                      type="text"
-                      value={metadata}
-                      onChange={(e) => setMetadata(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter metadata or click keywords above"
-                    />
-                  </div>
+              {showMintForm && (
+                <div className="mt-6 border-t pt-6">
+                  <form onSubmit={handleMint} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Metadata (Keywords)
+                      </label>
+                      <input
+                        type="text"
+                        value={metadata}
+                        onChange={handleMetadataChange}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter metadata or click keywords above"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Private Key
-                    </label>
-                    <input
-                      type="password"
-                      value={encryptionKey}
-                      onChange={(e) => setEncryptionKey(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter encryption key"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Private Key
+                      </label>
+                      <input
+                        type="password"
+                        value={encryptionKey}
+                        onChange={(e) => setEncryptionKey(e.target.value)}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter encryption key"
+                      />
+                    </div>
 
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={handleUpload}
-                      disabled={loading || processingFile}
-                      className="flex-1 bg-blue-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
-                    >
-                      {loading ? "Uploading..." : "Upload to Blockchain"}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading || processingFile}
-                      className="flex-1 bg-yellow-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-yellow-600 transition-colors disabled:opacity-50"
-                    >
-                      {loading ? "Minting..." : "Mint as NFT"}
-                    </button>
-                  </div>
-                </form>
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={handleUpload}
+                        disabled={loading || processingFile}
+                        className="flex-1 bg-blue-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                      >
+                        {loading ? "Uploading..." : "Upload to Blockchain"}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading || processingFile}
+                        className="flex-1 bg-yellow-500 text-white rounded-lg px-6 py-3 font-medium hover:bg-yellow-600 transition-colors disabled:opacity-50"
+                      >
+                        {loading ? "Minting..." : "Mint as NFT"}
+                      </button>
+                    </div>
+                  </form>
 
-                {mintedTokenId && (
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                    <p className="text-green-800">
-                      NFT minted successfully! Token ID: {mintedTokenId}
-                    </p>
-                  </div>
-                )}
+                  {mintedTokenId && (
+                    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                      <p className="text-green-800">
+                        NFT minted successfully! Token ID: {mintedTokenId}
+                      </p>
+                    </div>
+                  )}
 
-                {uploadSuccess && (
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                    <p className="text-green-800">
-                      File uploaded successfully to blockchain!
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {processingFile && (
-              <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Processing file...</p>
+                  {uploadSuccess && (
+                    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                      <p className="text-green-800">
+                        File uploaded successfully to blockchain!
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {processingFile && (
+                <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                    <p className="mt-2 text-gray-600">Processing file...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
-    </div>
   );
 };
-
 
 export default UploadData;

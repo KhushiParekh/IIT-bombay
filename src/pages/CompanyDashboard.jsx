@@ -6,10 +6,105 @@ import DataAnalysisDashBoard from '../components/AIAnalysisDashboard';
 // Pinata configuration
 import { BookCopyIcon, AArrowUpIcon, KeyIcon, LockOpenIcon, ChevronDownIcon, Book } from 'lucide-react';
 import { Brain, Loader, XCircle } from 'lucide-react';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 
 const CONTRACT_ADDRESS = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
 const PINATA_API_KEY = '815cb6c5b936de120de6';
 const PINATA_SECRET_KEY = '71b9f2139171591882a5b4cbb9d5ab4846b9b845911a5960111a2cd8ad4a9984';
+
+// Request Component
+const DataRequest = ({ username }) => {
+  const [requestTo, setRequestTo] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const sendRequest = async () => {
+    if (!requestTo || !fileName) {
+      setStatus('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Check if request already exists
+      const requestsRef = collection(db, 'requests');
+      const q = query(
+        requestsRef, 
+        where('sentBy', '==', username),
+        where('sentTo', '==', requestTo),
+        where('fileName', '==', fileName)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setStatus('Request already exists for this file and user');
+        setLoading(false);
+        return;
+      }
+
+      // Add new request
+      await addDoc(collection(db, 'requests'), {
+        sentBy: username,
+        sentTo: requestTo,
+        fileName: fileName,
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        createdAt: new Date()
+      });
+
+      setStatus('Request sent successfully!');
+      setRequestTo('');
+      setFileName('');
+    } catch (error) {
+      setStatus(`Error: ${error.message}`);
+      console.error('Error sending request:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-white rounded-lg shadow-md mt-4">
+      <h3 className="text-lg font-semibold mb-4">Request Data Access</h3>
+      <div className="space-y-4">
+        <input
+          type="text"
+          placeholder="Username to request from"
+          value={requestTo}
+          onChange={(e) => setRequestTo(e.target.value)}
+          className="w-full p-2 border rounded"
+          disabled={loading}
+        />
+        <input
+          type="text"
+          placeholder="File name"
+          value={fileName}
+          onChange={(e) => setFileName(e.target.value)}
+          className="w-full p-2 border rounded"
+          disabled={loading}
+        />
+        <button
+          onClick={sendRequest}
+          disabled={!requestTo || !fileName || loading}
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+        >
+          {loading ? 'Sending Request...' : 'Send Request'}
+        </button>
+        {status && (
+          <p className={`mt-2 text-sm ${
+            status.includes('Error') ? 'text-red-600' : 
+            status.includes('exists') ? 'text-yellow-600' : 
+            'text-green-600'
+          }`}>
+            {status}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // CompanyUpload Component
 const CompanyUpload = ({ contract }) => {
@@ -376,11 +471,11 @@ const AccessControl = ({ contract }) => {
   );
 };
 
-// Main CompanyDashboard Component
 const CompanyDashboard = () => {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [companyInfo, setCompanyInfo] = useState(null);
+  const [username, setUsername] = useState(''); // Add username state
 
   useEffect(() => {
     initializeEthers();
@@ -423,75 +518,33 @@ const CompanyDashboard = () => {
 
   if (!contract || !account) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Connecting to Ethereum</h2>
-          <p className="text-gray-600">Please make sure your wallet is connected</p>
-        </div>
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="text-center">Connecting to Ethereum...</div>
       </div>
     );
   }
 
   if (!companyInfo?.isAuthorized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <LockOpenIcon className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Access Denied</h2>
-          <p className="text-gray-600 mb-4">Your company is not authorized to access this dashboard. Please contact the administrator for authorization.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Retry Connection
-          </button>
-        </div>
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="text-center">Company not authorized. Please contact admin.</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Company Dashboard</h1>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <BookCopyIcon className="w-4 h-4" />
-                <span className="text-sm">Connected Account:</span>
-                <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{account}</span>
-              </div>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <div className={`inline-flex items-center px-4 py-2 rounded-full ${
-                companyInfo.isAuthorized ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  companyInfo.isAuthorized ? 'bg-green-500' : 'bg-red-500'
-                }`}></div>
-                {companyInfo.isAuthorized ? 'Active Connection' : 'Connection Error'}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold mb-2">Company Dashboard</h1>
+          <p className="text-gray-600">Connected Account: {account}</p>
         </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <CompanyAuthorization companyInfo={companyInfo} />
-            <CompanyUpload contract={contract} />
-            <DataAnalysisDashBoard/>
-          </div>
-          <div className="space-y-6">
-            <CompanyFiles contract={contract} account={account} />
-            <AccessControl contract={contract} />
-          </div>
-        </div>
+        
+        <CompanyAuthorization companyInfo={companyInfo} />
+        <CompanyUpload contract={contract} />
+        <CompanyFiles contract={contract} account={account} />
+        <DataRequest username={username} />
+        <AccessControl contract={contract} />
       </div>
     </div>
   );

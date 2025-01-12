@@ -427,7 +427,7 @@ const UploadData = ({ contractAddress, walletAddress }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Encryption Key
+                    Private Key
                     </label>
                     <input
                       type="password"

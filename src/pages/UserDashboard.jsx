@@ -8,7 +8,7 @@ import AccessControl from '../components/AccessControl';
 import ViewData from '../components/ViewData';
 import UserNFTs from '../components/UserNFTs';
 import ABI from '../abi.json';
-
+import ZKEmailModal from '../components/zkproof';
 const CONTRACT_ADDRESS = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
 const PINATA_API_KEY = '815cb6c5b936de120de6';
 const PINATA_SECRET_KEY = '71b9f2139171591882a5b4cbb9d5ab4846b9b845911a5960111a2cd8ad4a9984';
@@ -149,6 +149,11 @@ const UserDashboard = () => {
               <span className="text-sm text-gray-500 truncate">
                 {account}
               </span>
+             <div className="flex items-center space-x-4">
+             <ZKEmailModal/>
+              </div>
+
+              
             </div>
           </div>
         </div>

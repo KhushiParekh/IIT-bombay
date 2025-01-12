@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import Tesseract from 'tesseract.js';
 import WatermarkModal from './invisibleWatermark';
+
 const MintNFT = ({ contractAddress, walletAddress }) => {
   const [file, setFile] = useState(null);
   const [metadata, setMetadata] = useState('');
@@ -224,6 +225,7 @@ const MintNFT = ({ contractAddress, walletAddress }) => {
       <h2 className="text-2xl font-bold mb-6">Add Invisible Watermark</h2>
       
       <WatermarkModal/>
+      
     </div>
   );
 };

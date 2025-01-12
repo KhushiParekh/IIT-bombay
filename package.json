@@ -8,7 +8,7 @@
     "crypto-js": "^4.2.0",
     "ethers": "^5.7.2",
     "firebase": "^11.1.0",
-    "framer-motion": "^11.16.4",
+    "framer-motion": "^11.17.0",
     "invisible-watermark": "^1.0.17",
     "lucide-react": "^0.469.0",
     "pdfjs": "^2.5.3",

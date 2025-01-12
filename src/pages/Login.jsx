@@ -131,14 +131,16 @@
 // };
 
 // export default Login;
-
+// Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 import { motion } from 'framer-motion';
 
 const Login = () => {
+  const [accountType, setAccountType] = useState('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -147,9 +149,23 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/user-dashboard');
+      // Authenticate user
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Check user type in respective collection
+      const userDoc = await getDoc(doc(db, accountType === 'company' ? 'Companies' : 'Users', userCredential.user.uid));
+      
+      if (!userDoc.exists()) {
+        // If user doesn't exist in the selected collection, show error
+        await auth.signOut();
+        setError(`Invalid ${accountType} account. Please check your account type.`);
+        return;
+      }
+
+      // Navigate based on account type
+      navigate(accountType === 'company' ? '/company-dashboard' : '/user-dashboard');
     } catch (err) {
       setError('Invalid credentials. Please try again.');
     }
@@ -170,6 +186,25 @@ const Login = () => {
           </div>
         )}
 
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setAccountType('user')}
+            className={`flex-1 py-2 rounded-lg ${
+              accountType === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-100'
+            }`}
+          >
+            User
+          </button>
+          <button
+            onClick={() => setAccountType('company')}
+            className={`flex-1 py-2 rounded-lg ${
+              accountType === 'company' ? 'bg-indigo-600 text-white' : 'bg-gray-100'
+            }`}
+          >
+            Company
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -178,10 +213,11 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your email"
+              placeholder={`Enter ${accountType} email`}
               required
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
@@ -189,7 +225,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your password"
+              placeholder="Enter password"
               required
             />
           </div>
@@ -198,7 +234,7 @@ const Login = () => {
             type="submit"
             className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Login
+            Login as {accountType === 'company' ? 'Company' : 'User'}
           </button>
         </form>
 
@@ -217,3 +253,4 @@ const Login = () => {
 };
 
 export default Login;
+

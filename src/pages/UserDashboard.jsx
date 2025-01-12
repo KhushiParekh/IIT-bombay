@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import axios from 'axios';
-import { Bell } from 'lucide-react';
+import { Bell, User, LogOut } from 'lucide-react';
 import UploadData from '../components/UploadData';
 import MintNFT from '../components/MintNFT';
 import AccessControl from '../components/AccessControl';
 import ViewData from '../components/ViewData';
 import UserNFTs from '../components/UserNFTs';
+import { useNavigate } from 'react-router-dom';
 import ABI from '../abi.json';
 import ZKEmailModal from '../components/zkproof';
 const CONTRACT_ADDRESS = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
 const PINATA_API_KEY = '815cb6c5b936de120de6';
 const PINATA_SECRET_KEY = '71b9f2139171591882a5b4cbb9d5ab4846b9b845911a5960111a2cd8ad4a9984';
 
+
 const UserDashboard = () => {
+  const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [account, setAccount] = useState('');
   const [contract, setContract] = useState(null);
   const [userFiles, setUserFiles] = useState([]);
@@ -68,6 +72,27 @@ const UserDashboard = () => {
     };
     init();
   }, []);
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.notification-menu') && !event.target.closest('.profile-menu')) {
+        setShowNotifications(false);
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    // Add any logout cleanup here (clear states, disconnect wallet, etc.)
+    navigate('/login');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
 
   const handleNotificationClick = () => {
     setShowNotifications(!showNotifications);
@@ -146,6 +171,37 @@ const UserDashboard = () => {
                   </div>
                 )}
               </div>
+              <div className="relative profile-menu">
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(!showProfileMenu);
+                    setShowNotifications(false);
+                  }}
+                  className="p-2 rounded-full hover:bg-gray-100 focus:outline-none flex items-center space-x-2"
+                >
+                  <User className="h-6 w-6 text-gray-600" />
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
+                    <button
+                      onClick={handleProfileClick}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <span className="text-sm text-gray-500 truncate">
                 {account}
               </span>

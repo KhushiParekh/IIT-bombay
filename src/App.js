@@ -1,25 +1,33 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import  Login from './pages/Login';
+import UserDashboard  from './pages/UserDashboard';
+import  CompanyDashboard  from './pages/CompanyDashboard';
+import { Profile } from './components/Profile';
+import { Upload } from './components/Upload';
+import { FileDetails } from './components/FileDetails';
+import DataRequests from './components/DataRequests';
+import Settings from './components/Settings';
+import { Analytics } from './components/Analytics';
+import { MetadataTracker } from './components/MetaDataTracker';
+import FloatingChatButton from './components/FloatingChatButton';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+export const App = () => (
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/user-dashboard" element={<UserDashboard />} />
+      <Route path="/company-dashboard" element={<CompanyDashboard />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/upload" element={<Upload />} />
+      <Route path="/file/:id" element={<FileDetails />} />
+      <Route path="/requests" element={<DataRequests />} />
+      <Route path="/metadata-tracker" element={<MetadataTracker />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/analytics" element={<Analytics />} />
+    </Routes>
+    <FloatingChatButton/>
+  </BrowserRouter>
+);
 
 export default App;

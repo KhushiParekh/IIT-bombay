@@ -49,7 +49,7 @@ const UserDashboard = () => {
 
   const tabs = [
     { id: 'upload', label: 'Upload Data' },
-    { id: 'mint', label: 'Mint NFT' },
+    { id: 'mint', label: 'Add Watermark' },
     { id: 'access', label: 'Access Control' },
     { id: 'view', label: 'View Data' },
     { id: 'nfts', label: 'My NFTs' },

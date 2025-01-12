@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-
+import AIAnalysisDashboard from './AIAnalysisDashboard';
 const AccessControl = ({ contractAddress, walletAddress }) => {
   const [userFiles, setUserFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,7 +10,8 @@ const AccessControl = ({ contractAddress, walletAddress }) => {
   const [grantingAccess, setGrantingAccess] = useState(false);
   const CONTRACT = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
   contractAddress = CONTRACT;
-
+  // const CONTRACT = '0x376Fb6EB51F0860d699EC73e49CB79AF7F9fE0f8';
+  // const GEMINI_API_KEY = 'AIzaSyBXvyQXa7LjTNqqDkm3uvubhhkQ1A5dWZs';
   // Add function to view IPFS file
   const viewIPFSFile = async (ipfsHash) => {
     try {
@@ -246,6 +247,7 @@ const AccessControl = ({ contractAddress, walletAddress }) => {
           </form>
         </div>
       )}
+      <AIAnalysisDashboard contractAddress={contractAddress} walletAddress={walletAddress} />
     </div>
   );
 };
